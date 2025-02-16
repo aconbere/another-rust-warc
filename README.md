@@ -3,6 +3,12 @@ Another-Rust-Warc
 
 A fork of [rust-warc](https://github.com/orottier/rust-warc) adding writing support.
 
+## Why another rust warc crate?
+
+There are two main available warc libraries for rust; [warc](https://github.com/jedireza/warc) and [rust-warc](https://github.com/orottier/rust-warc). Both libraries have flaws for my personal usage. The former lacks support for streaming bodies (a feature I wanted for downloading larger bodies) and the former only has reader support. To move forward I forked rust-warc which I appreciated its simple and easily understood codebase and added write support.
+
+## Example
+
 ```rust
 use std::fs::File;
 use std::path::Path;

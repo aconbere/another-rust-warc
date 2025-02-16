@@ -13,7 +13,7 @@ pub fn write_version(w: &mut dyn Write, version: &str) -> Result<(), Error> {
 /// Note: Does not support multiline header values
 pub fn write_header(w: &mut dyn Write, headers: &Header) -> Result<(), Error> {
     for (k, v) in headers {
-        write!(w, "{}:{}\r\n", k.clone().to_string(), v)?;
+        write!(w, "{}: {}\r\n", k.clone().to_string(), v)?;
     }
     write!(w, "\r\n")?;
     Ok(())

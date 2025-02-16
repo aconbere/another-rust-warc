@@ -130,7 +130,7 @@ impl FieldNames {
     pub fn to_string(&self) -> String {
         match self {
             FieldNames::RecordID => "WARC-Record-ID".to_string(),
-            FieldNames::ContentLength => "WARC-Content-Length".to_string(),
+            FieldNames::ContentLength => "Content-Length".to_string(),
             FieldNames::Date => "WARC-Date".to_string(),
             FieldNames::Type => "WARC-type".to_string(),
             FieldNames::ContentType => "Content-Type".to_string(),

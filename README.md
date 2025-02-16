@@ -1,36 +1,53 @@
-Rust-Warc
+Another-Rust-Warc
 =========
 
-[![crates.io](https://img.shields.io/crates/v/rust_warc.svg)](https://crates.io/crates/rust_warc)
-
-A high performance and easy to use Web Archive (WARC) file reader
+A fork of [rust-warc](https://github.com/orottier/rust-warc) adding writing support.
 
 ```rust
-use rust_warc::WarcReader;
+use std::fs::File;
+use std::path::Path;
 
-use std::io;
+use another_rust_warc::header::{FieldNames, Header, RecordID, RecordTypes};
+use another_rust_warc::record::Record;
+use another_rust_warc::writer::write_record;
+use anyhow::{Result, anyhow};
+use chrono::prelude::*;
+use reqwest::blocking::Client;
+use reqwest::header::USER_AGENT;
 
-fn main() {
-    // we're taking input from stdin here, but any BufRead will do
-    let stdin = io::stdin();
-    let handle = stdin.lock();
+fn fetch(url: &str, output: &Path) -> Result<()> {
+    let client = Client::new();
 
-    let warc = WarcReader::new(handle);
+    let request = client
+        .get(uri_str)
+        .header(USER_AGENT, USER_AGENT_STR)
+        .build()?;
 
-    let mut response_counter = 0;
-    let mut response_size = 0;
+    let mut response =
+        client.execute(request.try_clone().ok_or(anyhow!("could not clone body"))?)?;
 
-    for item in warc {
-        let record = item.unwrap(); // could be IO/malformed error
+    let mut out_file = File::create(output)?;
 
-        // header names are case insensitive
-        if record.header.get(&"WARC-Type".into()) == Some(&"response".into()) {
-            response_counter += 1;
-            response_size += record.content.len();
-        }
-    }
+    let date = Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true);
 
-    println!("response records: {}", response_counter);
-    println!("response size: {} MiB", response_size >> 20);
+    let content_length = response
+        .content_length()
+        .ok_or(anyhow!("no valid content length header on response"))?;
+
+    let remote_addr = response
+        .remote_addr()
+        .ok_or(anyhow!("no valid remote address header in response"))?
+        .to_string();
+
+    let mut header = Header::new();
+    header.insert(FieldNames::RecordID, RecordID::new().to_string());
+    header.insert(FieldNames::Type, RecordTypes::Response.to_string());
+    header.insert(FieldNames::Date, date);
+    header.insert(FieldNames::IPAddress, remote_addr);
+    header.insert(FieldNames::ContentLength, content_length.to_string());
+    let record = Record::new(header, content_length);
+
+    // Writes the warc record
+    write_record(writer, &record, response)?;
 }
 ```

@@ -1,14 +1,20 @@
 [package]
-name = "rust_warc"
+name = "another_rust_warc"
 version = "1.0.0"
-authors = ["Otto <otto@ot-to.nl>"]
-edition = "2018"
-description = "A high performance and easy to use Web Archive (WARC) file reader"
+authors = ["Otto <otto@ot-to.nl>", "Anders Conbere <anders@conbere.org>"]
+edition = "2021"
+description = "An easy to use Web Archive (WARC) file reader and writer"
 keywords = ["warc", "web", "archive", "parser"]
 categories = ["parser-implementations"]
 
-repository = "https://github.com/orottier/rust-warc"
+repository = "https://github.com/aconbere/another-rust-warc"
 readme = "README.md"
 license = "MIT"
 
-[dependencies]
+[dependencies.uuid]
+version = "1.13.1"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]

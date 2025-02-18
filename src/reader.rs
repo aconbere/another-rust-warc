@@ -22,7 +22,8 @@ fn parse_record(mut read: impl BufRead) -> Result<Record, ReaderError> {
     rtrim(&mut version);
 
     if !version.starts_with("WARC/1.") {
-        return Err(ReaderError::Malformed(String::from("Unknown WARC version")));
+        let err = format!("Unknown WARC version: {}", version);
+        return Err(ReaderError::Malformed(err));
     }
 
     let mut header = Header::with_capacity(16); // no allocations if <= 16 header fields

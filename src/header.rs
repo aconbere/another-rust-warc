@@ -22,6 +22,7 @@ impl fmt::Display for RecordID {
     }
 }
 
+#[derive(PartialEq)]
 pub enum RecordTypes {
     General,
     WarcInfo,

@@ -1,6 +1,7 @@
+use std::fmt;
 use std::io::BufRead;
 
-use crate::header::{FieldNames, Header};
+use crate::header::{FieldNames, Header, HeaderError, RecordTypes};
 use crate::record::Record;
 
 // trim a string in place (no (re)allocations)
@@ -115,23 +116,24 @@ pub enum ReaderError {
     Malformed(String),
     IO(std::io::Error),
     EOF,
+    HeaderError(HeaderError),
 }
 
-/// WARC reader instance
-///
-/// The Reader serves as an iterator for [Records](Record) (or [errors](ReaderError))
-pub struct Reader<R> {
-    read: R,
-    valid_state: bool,
-}
-
-impl<R: BufRead> Reader<R> {
-    /// Create a new Reader from a [BufRead] input
-    pub fn new(read: R) -> Self {
-        Self {
-            read,
-            valid_state: true,
+impl Into<String> for &ReaderError {
+    fn into(self) -> String {
+        match self {
+            ReaderError::Malformed(e) => format!("Malformed: {}", e),
+            ReaderError::IO(e) => format!("IO: {}", e),
+            ReaderError::EOF => format!("EOF"),
+            ReaderError::HeaderError(e) => format!("{}", e),
         }
+    }
+}
+
+impl fmt::Display for ReaderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let o: String = self.into();
+        write!(f, "{}", o)
     }
 }
 
@@ -152,6 +154,47 @@ impl<R: BufRead> Iterator for Reader<R> {
             }
         }
     }
+}
+
+impl std::error::Error for ReaderError {}
+
+/// WARC reader instance
+///
+/// The Reader serves as an iterator for [Records](Record) (or [errors](ReaderError))
+pub struct Reader<R> {
+    read: R,
+    valid_state: bool,
+}
+
+impl<R: BufRead> Reader<R> {
+    /// Create a new Reader from a [BufRead] input
+    pub fn new(read: R) -> Self {
+        Self {
+            read,
+            valid_state: true,
+        }
+    }
+}
+
+pub fn find_record_by_type<T>(
+    reader: &mut Reader<T>,
+    record_type: RecordTypes,
+) -> Result<Option<Record>, ReaderError>
+where
+    T: BufRead,
+{
+    for record in reader {
+        let r = record?;
+        if let Some(type_header_str) = r.header.get(&FieldNames::Type) {
+            let type_header = RecordTypes::from_string(type_header_str)
+                .map_err(|e| ReaderError::HeaderError(e))?;
+
+            if type_header == record_type {
+                return Ok(Some(r));
+            }
+        }
+    }
+    Ok(None)
 }
 
 #[cfg(test)]

@@ -50,7 +50,7 @@ impl RecordTypes {
         }
     }
 
-    pub fn from_string(s: &str) -> Result<RecordTypes, String> {
+    pub fn from_string(s: &str) -> Result<RecordTypes, HeaderError> {
         match s {
             "general" => Ok(RecordTypes::General),
             "warcinfo" => Ok(RecordTypes::WarcInfo),
@@ -61,7 +61,7 @@ impl RecordTypes {
             "revisit" => Ok(RecordTypes::Revisit),
             "conversion" => Ok(RecordTypes::Conversion),
             "continuation" => Ok(RecordTypes::Continuation),
-            _ => Err(format!("no record type matches: {}", s)),
+            _ => Err(HeaderError::InvalidRecordType(s.to_string())),
         }
     }
 }
@@ -155,6 +155,29 @@ impl FieldNames {
         }
     }
 }
+
+/// WARC Processing error
+#[derive(Debug)]
+pub enum HeaderError {
+    InvalidRecordType(String),
+}
+
+impl Into<String> for &HeaderError {
+    fn into(self) -> String {
+        match self {
+            HeaderError::InvalidRecordType(e) => format!("InvalidRecordType: {}", e),
+        }
+    }
+}
+
+impl fmt::Display for HeaderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let o: String = self.into();
+        write!(f, "{}", o)
+    }
+}
+
+impl std::error::Error for HeaderError {}
 
 #[cfg(test)]
 mod tests {
